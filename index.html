@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>P.R.E.P Prompt Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow workbench column; three steps across the top; each of the four P.R.E.P parts keeps one colour everywhere on the page. */
+:root{
+  --bg:#f6f5f0; --surface:#fffefa; --sunk:#ecebe3; --ink:#1b1f3b; --muted:#565b7c; --line:#d5d4c8;
+  --good:#17714a; --good-bg:#e1f4ea; --bad:#b3261e; --bad-bg:#fbe6e4;
+  --p:#c2410c; --r:#0e7490; --e:#6d28d9; --m:#15803d; --on:#ffffff;
+  --display:"Space Grotesk","Trebuchet MS",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14162b; --surface:#1e2140; --sunk:#292d52; --ink:#eef0ff; --muted:#aeb3d6; --line:#3a3f6b;
+  --good:#5fd99a; --good-bg:#153a2a; --bad:#ff8a80; --bad-bg:#47201d;
+  --p:#fb923c; --r:#22d3ee; --e:#c4b5fd; --m:#4ade80; --on:#14162b; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#14162b; --surface:#1e2140; --sunk:#292d52; --ink:#eef0ff; --muted:#aeb3d6; --line:#3a3f6b;
+  --good:#5fd99a; --good-bg:#153a2a; --bad:#ff8a80; --bad-bg:#47201d;
+  --p:#fb923c; --r:#22d3ee; --e:#c4b5fd; --m:#4ade80; --on:#14162b; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2rem,6vw,2.8rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.4rem;font-weight:700}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.sub{color:var(--muted);max-width:56ch;margin-top:6px}
+.key{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.key div{border-radius:8px;padding:10px 12px;background:var(--surface);border:2px solid var(--c);min-width:0}
+.key b{font-family:var(--display);color:var(--c);display:block;font-size:1.05rem}
+.key span{font-size:.85rem;color:var(--muted)}
+@media (max-width:560px){.key{grid-template-columns:1fr 1fr}}
+.cp{--c:var(--p)} .cr{--c:var(--r)} .ce{--c:var(--e)} .cm{--c:var(--m)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tabs button{background:var(--surface);border:2px solid var(--line);border-radius:8px;padding:10px 6px;font-weight:600;min-width:0}
+.tabs button[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.tabs small{display:block;font-weight:400;font-size:.78rem;opacity:.8}
+.panel{background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.intro{color:var(--muted);max-width:60ch}
+.count{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.card{background:var(--sunk);border-radius:8px;padding:18px;font-size:1.1rem;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--surface);border:2px solid var(--ink);border-radius:8px;padding:9px 16px;font-weight:600}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.pick{border-color:var(--c);color:var(--c)}
+.btn.pick:hover:not(:disabled){background:var(--c);color:var(--on)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.fb{border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.fb.good{background:var(--good-bg)} .fb.bad{background:var(--bad-bg)}
+.fb strong{color:var(--good)} .fb.bad strong{color:var(--bad)}
+.end{border:2px dashed var(--ink);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.end .big{font-family:var(--display);font-weight:700;font-size:1.5rem}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-weight:600}
+.field label b{font-family:var(--display);color:var(--c)}
+.field .hint{font-size:.85rem;color:var(--muted)}
+.field input{font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-left:6px solid var(--c);border-radius:8px;padding:10px 12px;width:100%}
+.meter{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.meter span{height:10px;border-radius:99px;background:var(--sunk)}
+.meter span.on{background:var(--c)}
+textarea{font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.95rem;color:var(--ink);background:var(--sunk);border:none;border-radius:8px;padding:14px;width:100%;min-height:150px;resize:vertical}
+.check{display:flex;gap:10px;align-items:flex-start}
+.check input{width:20px;height:20px;margin-top:3px;accent-color:var(--ink)}
+.note{font-size:.9rem;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>P.R.E.P Prompt Lab</h1>
+    <p class="sub">A lazy question gets a lazy answer. Practise the four things to tell an AI, then build a prompt of your own to paste into Copilot.</p>
+  </header>
+  <div class="key" aria-label="The four parts of P.R.E.P">
+    <div class="cp"><b>Prompt</b><span>What is the task?</span></div>
+    <div class="cr"><b>Role</b><span>Who should the AI be?</span></div>
+    <div class="ce"><b>Explicit</b><span>What exactly do I need?</span></div>
+    <div class="cm"><b>Parameters</b><span>What form? How long?</span></div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Activities"></nav>
+  <main id="app"></main>
+</div>
+
+<script>
+const PARTS=[['Prompt','cp'],['Role','cr'],['Explicit','ce'],['Parameters','cm']];
+const GAPS=[
+ {t:'Explain how vaccines work. I know what a virus is, but not how the body remembers it. Use four bullet points and one comparison.',a:1,why:'Nobody told the AI who to be. Try: "Act as a Year 9 biology tutor."'},
+ {t:'Act as a Year 9 maths tutor. Quiz me on expanding brackets. I keep making sign errors with negative numbers.',a:3,why:'No form or length. How many questions? One at a time, or all at once?'},
+ {t:'Act as a French teacher. Help me revise the perfect tense. Give me ten short questions.',a:2,why:'It does not say what you find hard or what level you are at, so the questions could be far too easy or too hard.'},
+ {t:'Act as a patient geography tutor. Plate boundaries, especially what happens where plates collide. Keep it under 150 words.',a:0,why:'There is a topic but no task. Explain it? Quiz you? Summarise it? The AI has to guess.'},
+ {t:'Act as an English teacher. Help me understand how Shakespeare shows ambition in Macbeth. I find it hard to choose quotations.',a:3,why:'No form. A paragraph? A table of quotations? Three examples or ten?'}];
+const LABELS=[
+ {t:'Act as a patient Year 9 science tutor.',a:1,why:'It tells the AI who to be.'},
+ {t:'Explain why the Moon has phases.',a:0,why:'This is the task.'},
+ {t:'I understand orbits, but I mix up waxing and waning.',a:2,why:'It says exactly what you need help with.'},
+ {t:'Use five short bullet points and one everyday comparison.',a:3,why:'It sets the form and the length.'},
+ {t:'Quiz me on the causes of the English Civil War.',a:0,why:'This is the task.'},
+ {t:'Stop after six questions and give me a score out of six.',a:3,why:'It sets how many and what you get at the end.'}];
+const COACH="Don't give me the answers. Ask me one question at a time, wait for my reply, then tell me what I got wrong and why.";
+
+const $=(t,a={},...c)=>{const e=document.createElement(t);for(const k in a){if(a[k]==null)continue;if(k==='class')e.className=a[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k]);}for(const x of c.flat()){if(x==null||x===false)continue;e.append(x.nodeType?x:document.createTextNode(x));}return e;};
+const app=document.getElementById('app'),tabs=document.getElementById('tabs');
+const VIEWS=[['label','1. Label the parts','Which part is it?'],['spot','2. Spot the gap','What is missing?'],['build','3. Build your own','Then copy it']];
+let view='label',draft={f:['','','',''],coach:false};
+
+function quizGame(el,items,intro,ask,noun,next){let i=0,score=0;const n=items.length;
+ const show=()=>{el.replaceChildren($('h2',{},ask),$('p',{class:'intro'},intro));
+  if(i>=n){el.append($('div',{class:'end'},$('p',{class:'big'},score+' / '+n),$('p',{},score===n?'All correct.':'Read the explanations and try again, or move on.'),$('div',{class:'row'},$('button',{class:'btn',onclick:()=>{i=0;score=0;show()}},'Play again'),$('button',{class:'btn primary',onclick:()=>go(next)},'Next activity'))));return}
+  const it=items[i],fb=$('div');
+  const row=$('div',{class:'row'},PARTS.map(([name,cls],pi)=>$('button',{class:'btn pick '+cls,onclick:()=>{row.querySelectorAll('button').forEach(b=>b.disabled=true);const ok=pi===it.a;if(ok)score++;
+   fb.replaceChildren($('div',{class:'fb '+(ok?'good':'bad')},$('strong',{},ok?'Correct: '+PARTS[it.a][0]:'Not quite. It is '+PARTS[it.a][0]),$('p',{},it.why),$('button',{class:'btn primary',onclick:()=>{i++;show()}},i+1<n?'Next':'See score')))}},name)));
+  el.append($('p',{class:'count'},noun+' '+(i+1)+' of '+n),$('div',{class:'card'},it.t),row,fb)};
+ show()}
+
+function build(el){
+ const HINT=[['What do you want it to do?','Quiz me on photosynthesis.'],['Who should it be?','Act as a patient Year 9 biology tutor.'],['What exactly do you need? What do you find hard?','I mix up the reactants and the products.'],['What form? How long? How many?','Give me five questions, then a score.']];
+ const out=$('textarea',{id:'out',readonly:'','aria-label':'Your finished prompt'}),meter=$('div',{class:'meter','aria-hidden':'true'},PARTS.map(p=>$('span',{class:p[1]}))),status=$('p',{class:'count'}),msg=$('p',{class:'note','aria-live':'polite'});
+ const done=i=>draft.f[i].trim().split(/\s+/).filter(Boolean).length>=3;
+ const upd=()=>{const parts=[1,0,2,3].map(i=>draft.f[i].trim()).filter(Boolean).map(s=>/[.?!]$/.test(s)?s:s+'.');if(draft.coach)parts.push(COACH);out.value=parts.join(' ');
+  let n=0;[...meter.children].forEach((s,i)=>{const d=done(i);s.classList.toggle('on',d);if(d)n++});
+  const miss=PARTS.filter((p,i)=>!done(i)).map(p=>p[0]);status.textContent=n===4?'All four parts are there. Read it through, then copy it.':'Still thin or missing: '+miss.join(', ')+'. Aim for at least a few words in each.';msg.textContent=''};
+ const fields=PARTS.map(([name,cls],i)=>{const inp=$('input',{id:'f-'+i,type:'text',placeholder:'e.g. '+HINT[i][1],autocomplete:'off',value:draft.f[i]});inp.addEventListener('input',()=>{draft.f[i]=inp.value;upd()});
+  return $('div',{class:'field '+cls},$('label',{for:'f-'+i},$('b',{},name),' · '+HINT[i][0]),inp)});
+ const cb=$('input',{type:'checkbox',id:'coach'});cb.checked=draft.coach;cb.addEventListener('change',()=>{draft.coach=cb.checked;upd()});
+ const copy=()=>{if(!out.value){msg.textContent='Write something first.';return}const fall=()=>{out.focus();out.select();msg.textContent='Selected. Press Ctrl+C (or Cmd+C) to copy, then paste into Copilot.'};
+  try{navigator.clipboard.writeText(out.value).then(()=>{msg.textContent='Copied. Paste it into Copilot.'},fall)}catch(e){fall()}};
+ el.replaceChildren($('h2',{},'Build your own prompt'),$('p',{class:'intro'},'Choose a topic you find hard. Fill in all four boxes, then copy your prompt into Copilot. Never type personal information about yourself or anyone else.'),
+  ...fields,$('label',{class:'check',for:'coach'},cb,$('span',{},$('b',{},'Coach mode. '),'Add: "'+COACH+'"')),meter,status,out,
+  $('div',{class:'row'},$('button',{class:'btn primary',onclick:copy},'Copy my prompt'),$('button',{class:'btn',onclick:()=>{draft={f:['','','',''],coach:false};build(el)}},'Clear')),msg,
+  $('p',{class:'note'},'The bars only check that each part is there. Whether the answer is correct is for you to check against your notes.'));upd()}
+
+function render(){tabs.replaceChildren(...VIEWS.map(([id,name,sub])=>$('button',{'aria-current':String(id===view),onclick:()=>go(id)},name,$('small',{},sub))));
+ const el=$('section',{class:'panel'});app.replaceChildren(el);
+ if(view==='spot')quizGame(el,GAPS,'Each prompt has three of the four parts. Which one is missing?','Spot the gap','Prompt','build');
+ else if(view==='label')quizGame(el,LABELS,'Each sentence comes from a good prompt. Which of the four parts is it?','Label the parts','Sentence','spot');
+ else build(el)}
+function go(id){view=id;try{if(location.hash!=='#'+id)location.hash=id}catch(e){}render()}
+function route(){const h=location.hash.slice(1),v=VIEWS.some(x=>x[0]===h)?h:'label';if(v!==view||!app.firstChild){view=v;render()}}
+window.addEventListener('hashchange',route);route();
+</script>
+
+</body>
+</html>
