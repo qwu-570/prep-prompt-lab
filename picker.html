@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seat Picker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: the picked seat is the biggest thing on the page; the seating plan sits under it; settings are tucked at the bottom. */
+:root{
+  --bg:#f6f5f0; --surface:#fffefa; --sunk:#ecebe3; --ink:#1b1f3b; --muted:#565b7c; --line:#d5d4c8;
+  --accent:#c2410c; --on-accent:#ffffff; --done:#0e7490;
+  --display:"Space Grotesk","Trebuchet MS",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14162b; --surface:#1e2140; --sunk:#292d52; --ink:#eef0ff; --muted:#aeb3d6; --line:#3a3f6b;
+  --accent:#fb923c; --on-accent:#14162b; --done:#22d3ee; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#14162b; --surface:#1e2140; --sunk:#292d52; --ink:#eef0ff; --muted:#aeb3d6; --line:#3a3f6b;
+  --accent:#fb923c; --on-accent:#14162b; --done:#22d3ee; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-size:1.6rem;margin:0;line-height:1.1}
+h2{font-family:var(--display);font-size:1.1rem;margin:0}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px}
+.top a{color:var(--muted)}
+.stage{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.seat{font-family:var(--display);font-weight:700;font-size:clamp(5rem,26vw,12rem);line-height:1;font-variant-numeric:tabular-nums;min-height:1em}
+.seat.rolling{color:var(--muted)}
+.seat.final{color:var(--accent)}
+.msg{color:var(--muted);min-height:1.5em}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.btn{background:var(--surface);border:2px solid var(--ink);border-radius:8px;padding:9px 16px;font-weight:600}
+.btn.primary{background:var(--ink);color:var(--bg);font-size:1.25rem;padding:14px 32px}
+.btn:disabled{opacity:.5;cursor:default}
+.plan{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.scroll{overflow-x:auto}
+.grid{display:grid;gap:6px;min-width:min-content}
+.grid .rl{font-family:var(--display);font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--muted);min-width:28px}
+.grid button{min-width:44px;height:44px;border-radius:8px;border:2px solid var(--line);background:var(--bg);font-weight:600;font-variant-numeric:tabular-nums;padding:0}
+.grid button.picked{background:var(--done);border-color:var(--done);color:var(--on-accent)}
+.grid button.now{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.grid button.off{background:transparent;border-style:dashed;color:var(--muted);text-decoration:line-through}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;border:2px solid var(--line);display:inline-block}
+.sw.p{background:var(--done);border-color:var(--done)} .sw.n{background:var(--accent);border-color:var(--accent)} .sw.o{border-style:dashed}
+.settings{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.9rem}
+.field select,.field input[type=number]{background:var(--bg);border:2px solid var(--line);border-radius:8px;padding:8px 10px;width:6.5em}
+.check{display:flex;gap:8px;align-items:center;font-weight:600;font-size:.9rem}
+.check input{width:20px;height:20px;accent-color:var(--ink)}
+.hist{font-variant-numeric:tabular-nums;color:var(--muted);overflow-wrap:anywhere}
+@media (prefers-reduced-motion:reduce){.seat{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Seat Picker</h1><a href="./">Back to P.R.E.P Prompt Lab</a></div>
+
+  <section class="stage">
+    <div class="seat" id="seat" aria-live="polite">?</div>
+    <p class="msg" id="msg">Press the button, or the space bar, to pick a seat.</p>
+    <div class="row">
+      <button class="btn primary" id="pick">Pick a seat</button>
+      <button class="btn" id="round">New round</button>
+    </div>
+  </section>
+
+  <section class="plan">
+    <h2>Seating plan</h2>
+    <div class="scroll"><div class="grid" id="grid"></div></div>
+    <div class="key"><span><i class="sw n"></i>Picked now</span><span><i class="sw p"></i>Already picked</span><span><i class="sw o"></i>Empty seat (click a seat to switch it off or on)</span></div>
+    <p class="hist" id="hist"></p>
+  </section>
+
+  <section class="plan">
+    <h2>Room setup</h2>
+    <div class="settings">
+      <label class="field" for="rows">Last row<select id="rows"></select></label>
+      <label class="field" for="cols">Seats per row<input id="cols" type="number" min="1" max="20" step="1"></label>
+      <label class="check" for="norep"><input id="norep" type="checkbox">No repeats until everyone has been picked</label>
+      <button class="btn" id="clearoff">Switch all seats on</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const LETTERS='ABCDEFGHIJKL';
+let S={rows:3,cols:10,noRepeat:true,off:[],picked:[]},current=null,busy=false;
+try{const v=JSON.parse(localStorage.getItem('seatpicker')||'null');if(v&&v.rows&&v.cols)S=Object.assign(S,v,{picked:[]})}catch(e){}
+const save=()=>{try{localStorage.setItem('seatpicker',JSON.stringify({rows:S.rows,cols:S.cols,noRepeat:S.noRepeat,off:S.off}))}catch(e){}};
+const $=id=>document.getElementById(id);
+const seatEl=$('seat'),msg=$('msg'),grid=$('grid'),hist=$('hist'),rowsEl=$('rows'),colsEl=$('cols'),norep=$('norep'),pickBtn=$('pick');
+const allSeats=()=>{const a=[];for(let r=0;r<S.rows;r++)for(let c=1;c<=S.cols;c++)a.push(LETTERS[r]+c);return a};
+const active=()=>allSeats().filter(s=>!S.off.includes(s));
+function pool(){const a=active();if(S.noRepeat)return a.filter(s=>!S.picked.includes(s));return a.length>1?a.filter(s=>s!==current):a}
+
+function draw(){
+  grid.style.gridTemplateColumns='auto repeat('+S.cols+',minmax(44px,1fr))';
+  grid.replaceChildren();
+  for(let r=0;r<S.rows;r++){
+    const l=document.createElement('div');l.className='rl';l.textContent=LETTERS[r];grid.append(l);
+    for(let c=1;c<=S.cols;c++){const id=LETTERS[r]+c,b=document.createElement('button');b.textContent=c;b.setAttribute('aria-label','Seat '+id);
+      b.className=S.off.includes(id)?'off':id===current?'now':S.picked.includes(id)?'picked':'';
+      b.addEventListener('click',()=>{if(busy)return;S.off=S.off.includes(id)?S.off.filter(x=>x!==id):S.off.concat(id);S.picked=S.picked.filter(x=>x!==id);if(current===id){current=null;seatEl.textContent='?';seatEl.className='seat'}save();draw()});
+      grid.append(b)}
+  }
+  const n=active().length,left=pool().length;
+  hist.textContent=S.picked.length?'Picked so far: '+S.picked.join(', '):'';
+  pickBtn.disabled=busy||n===0||(S.noRepeat&&left===0);
+  if(!busy){if(n===0)msg.textContent='Every seat is switched off. Switch some on below.';
+    else if(S.noRepeat&&left===0)msg.textContent='Everyone has been picked. Press New round to start again.';
+    else if(current)msg.textContent=S.noRepeat?left+' of '+n+' seats still to be picked.':n+' seats in play.';}
+}
+function pick(){
+  if(busy)return;const p=pool();if(!p.length){draw();return}
+  const choice=p[Math.floor(Math.random()*p.length)],all=active();
+  const finish=()=>{busy=false;current=choice;S.picked.push(choice);seatEl.textContent=choice;seatEl.className='seat final';draw()};
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||all.length<2){finish();return}
+  busy=true;pickBtn.disabled=true;msg.textContent='Picking…';seatEl.className='seat rolling';let i=0;
+  const t=setInterval(()=>{seatEl.textContent=all[Math.floor(Math.random()*all.length)];if(++i>=14){clearInterval(t);finish()}},70);
+}
+function setup(){
+  rowsEl.replaceChildren(...[...LETTERS].map((L,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=L;return o}));
+  rowsEl.value=S.rows;colsEl.value=S.cols;norep.checked=S.noRepeat;
+  const resize=()=>{const ok=allSeats();S.off=S.off.filter(s=>ok.includes(s));S.picked=S.picked.filter(s=>ok.includes(s));if(current&&!ok.includes(current)){current=null;seatEl.textContent='?';seatEl.className='seat'}save();draw()};
+  rowsEl.addEventListener('change',()=>{S.rows=+rowsEl.value;resize()});
+  colsEl.addEventListener('input',()=>{const v=Math.round(+colsEl.value);if(!v||v<1)return;const n=Math.min(20,v);if(n!==S.cols){S.cols=n;resize()}});
+  colsEl.addEventListener('change',()=>{colsEl.value=S.cols});
+  norep.addEventListener('change',()=>{S.noRepeat=norep.checked;save();draw()});
+  $('clearoff').addEventListener('click',()=>{S.off=[];save();draw()});
+  $('round').addEventListener('click',()=>{if(busy)return;S.picked=[];current=null;seatEl.textContent='?';seatEl.className='seat';msg.textContent='New round. Press the button, or the space bar, to pick a seat.';draw()});
+  pickBtn.addEventListener('click',pick);
+  document.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT','BUTTON','A'].includes(document.activeElement.tagName)){e.preventDefault();pick()}});
+  draw();
+}
+setup();
+</script>
+</body>
+</html>
