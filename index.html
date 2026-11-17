@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>body{margin:0}[hidden]{display:none!important}</style>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>P.R.E.P Prompt Lab</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
@@ -72,8 +67,6 @@ textarea{font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;font-siz
 .check input{width:20px;height:20px;margin-top:3px;accent-color:var(--ink)}
 .note{font-size:.9rem;color:var(--muted)}
 </style>
-</head>
-<body>
 
 <div class="wrap">
   <header>
@@ -96,8 +89,7 @@ const GAPS=[
  {t:'Explain how vaccines work. I know what a virus is, but not how the body remembers it. Use four bullet points and one comparison.',a:1,why:'Nobody told the AI who to be. Try: "Act as a Year 9 biology tutor."'},
  {t:'Act as a Year 9 maths tutor. Quiz me on expanding brackets. I keep making sign errors with negative numbers.',a:3,why:'No form or length. How many questions? One at a time, or all at once?'},
  {t:'Act as a French teacher. Help me revise the perfect tense. Give me ten short questions.',a:2,why:'It does not say what you find hard or what level you are at, so the questions could be far too easy or too hard.'},
- {t:'Act as a patient geography tutor. Plate boundaries, especially what happens where plates collide. Keep it under 150 words.',a:0,why:'There is a topic but no task. Explain it? Quiz you? Summarise it? The AI has to guess.'},
- {t:'Act as an English teacher. Help me understand how Shakespeare shows ambition in Macbeth. I find it hard to choose quotations.',a:3,why:'No form. A paragraph? A table of quotations? Three examples or ten?'}];
+ {t:'Act as a patient geography tutor. Plate boundaries, especially what happens where plates collide. Keep it under 150 words.',a:0,why:'There is a topic but no task. Explain it? Quiz you? Summarise it? The AI has to guess.'}];
 const LABELS=[
  {t:'Act as a patient Year 9 science tutor.',a:1,why:'It tells the AI who to be.'},
  {t:'Explain why the Moon has phases.',a:0,why:'This is the task.'},
@@ -105,6 +97,14 @@ const LABELS=[
  {t:'Use five short bullet points and one everyday comparison.',a:3,why:'It sets the form and the length.'},
  {t:'Quiz me on the causes of the English Civil War.',a:0,why:'This is the task.'},
  {t:'Stop after six questions and give me a score out of six.',a:3,why:'It sets how many and what you get at the end.'}];
+const EXAMPLES=[
+ ['Quiz me on photosynthesis.','Act as a patient Year 9 biology tutor.','I mix up the reactants and the products.','Give me five questions, one at a time, then a score.'],
+ ['Help me revise the causes of the First World War.','Act as a friendly history teacher.','I can name the causes but struggle to explain how they link together.','Ask me three questions, then give me a short summary table.'],
+ ['Test me on solving linear equations.','Act as a Year 9 maths coach.','I keep making mistakes when the unknown is on both sides.','Give me four questions that get harder, one at a time.'],
+ ['Help me learn French food vocabulary.','Act as an encouraging French teacher.','I forget whether each noun is masculine or feminine.','Give me ten words to translate, one at a time, and check my le or la.'],
+ ['Help me understand plate tectonics.','Act as a patient geography tutor.','I do not understand what happens at destructive plate boundaries.','Explain it in under 150 words, then ask me two questions to check.'],
+ ['Help me improve my persuasive writing.','Act as a supportive English teacher.','My arguments are good, but my paragraphs do not flow.','Give me three tips with one example each. Do not rewrite my work.']];
+let exIdx=-1;
 const COACH="Don't give me the answers. Ask me one question at a time, wait for my reply, then tell me what I got wrong and why.";
 
 const $=(t,a={},...c)=>{const e=document.createElement(t);for(const k in a){if(a[k]==null)continue;if(k==='class')e.className=a[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k]);}for(const x of c.flat()){if(x==null||x===false)continue;e.append(x.nodeType?x:document.createTextNode(x));}return e;};
@@ -121,7 +121,7 @@ function quizGame(el,items,intro,ask,noun,next){let i=0,score=0;const n=items.le
   el.append($('p',{class:'count'},noun+' '+(i+1)+' of '+n),$('div',{class:'card'},it.t),row,fb)};
  show()}
 
-function build(el){
+function build(el,note){
  const HINT=[['What do you want it to do?','Quiz me on photosynthesis.'],['Who should it be?','Act as a patient Year 9 biology tutor.'],['What exactly do you need? What do you find hard?','I mix up the reactants and the products.'],['What form? How long? How many?','Give me five questions, then a score.']];
  const out=$('textarea',{id:'out',readonly:'','aria-label':'Your finished prompt'}),meter=$('div',{class:'meter','aria-hidden':'true'},PARTS.map(p=>$('span',{class:p[1]}))),status=$('p',{class:'count'}),msg=$('p',{class:'note','aria-live':'polite'});
  const done=i=>draft.f[i].trim().split(/\s+/).filter(Boolean).length>=3;
@@ -135,8 +135,8 @@ function build(el){
   try{navigator.clipboard.writeText(out.value).then(()=>{msg.textContent='Copied. Paste it into Copilot.'},fall)}catch(e){fall()}};
  el.replaceChildren($('h2',{},'Build your own prompt'),$('p',{class:'intro'},'Choose a topic you find hard. Fill in all four boxes, then copy your prompt into Copilot. Never type personal information about yourself or anyone else.'),
   ...fields,$('label',{class:'check',for:'coach'},cb,$('span',{},$('b',{},'Coach mode. '),'Add: "'+COACH+'"')),meter,status,out,
-  $('div',{class:'row'},$('button',{class:'btn primary',onclick:copy},'Copy my prompt'),$('button',{class:'btn',onclick:()=>{draft={f:['','','',''],coach:false};build(el)}},'Clear')),msg,
-  $('p',{class:'note'},'The bars only check that each part is there. Whether the answer is correct is for you to check against your notes.'));upd()}
+  $('div',{class:'row'},$('button',{class:'btn primary',onclick:copy},'Copy my prompt'),$('button',{class:'btn',onclick:()=>{let k;do{k=Math.floor(Math.random()*EXAMPLES.length)}while(k===exIdx&&EXAMPLES.length>1);exIdx=k;draft.f=EXAMPLES[k].slice();build(el,'Example loaded. Now change it to a topic you find hard.')}},'Generate an example'),$('button',{class:'btn',onclick:()=>{draft={f:['','','',''],coach:false};build(el)}},'Clear')),msg,
+  $('p',{class:'note'},'The bars only check that each part is there. Whether the answer is correct is for you to check against your notes.'));upd();if(note)msg.textContent=note}
 
 function render(){tabs.replaceChildren(...VIEWS.map(([id,name,sub])=>$('button',{'aria-current':String(id===view),onclick:()=>go(id)},name,$('small',{},sub))));
  const el=$('section',{class:'panel'});app.replaceChildren(el);
@@ -148,5 +148,4 @@ function route(){const h=location.hash.slice(1),v=VIEWS.some(x=>x[0]===h)?h:'lab
 window.addEventListener('hashchange',route);route();
 </script>
 
-</body>
-</html>
+</body></html>
